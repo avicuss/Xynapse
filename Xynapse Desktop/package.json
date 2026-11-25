@@ -6,6 +6,7 @@
   "main": "main.js",
   "private": true,
   "author": "Xynapse",
+  "license": "MIT",
   "scripts": {
     "sync-icon": "node scripts/sync-icon.js",
     "prestart": "node scripts/sync-icon.js",
