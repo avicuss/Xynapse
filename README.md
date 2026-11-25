@@ -54,4 +54,4 @@ Xynapse Code/      Terminal CLI
 
 ## License
 
-Proprietary. All rights reserved.
+[MIT](./LICENSE). The Xynapse name and logo are not covered by this license, and the backend service at xynapse.eu is not part of this repository.
