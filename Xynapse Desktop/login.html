@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:">
+<title>Sign in – Xynapse</title>
+<style>
+  :root{--bg:#000;--card:#0e0e12;--line:#2a2a31;--ink:#f4f4f6;--mute:#8d8d9b;--v:#8d93ff;--c:#6ee7ef;color-scheme:dark}
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  /* flex + auto margins (instead of grid centering) so a tall form can still be scrolled to its top */
+  body{display:flex;overflow-y:auto;background:var(--bg);color:var(--ink);font:400 15px/1.5 'Segoe UI',system-ui,-apple-system,sans-serif;
+       background-image:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(82,91,255,.16),transparent 70%),radial-gradient(ellipse 40% 35% at 85% 100%,rgba(80,216,235,.07),transparent 70%);background-attachment:fixed}
+  button,input{font:inherit;color:inherit}
+  button{cursor:pointer}
+  :focus-visible{outline:2px solid var(--c);outline-offset:2px}
+
+  main{width:min(380px,calc(100% - 40px));margin:auto;padding:28px 0;animation:in .5s both}
+  @keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .mark{width:44px;height:44px;margin:0 auto 20px;display:grid;place-items:center;border-radius:14px;
+        background:linear-gradient(145deg,#1d1f3a,#0e0f18);border:1px solid rgba(164,169,255,.35);box-shadow:0 0 40px rgba(124,130,255,.2)}
+  .mark svg{width:22px;height:22px}
+  h1{margin:0 0 6px;text-align:center;font-size:1.6rem;font-weight:600;letter-spacing:-.03em}
+  .sub{margin:0 0 22px;text-align:center;color:var(--mute);font-size:.92rem}
+
+  .tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;margin:0 0 20px;border:1px solid #25252d;border-radius:13px;background:#09090d}
+  .tabs button{border:0;background:transparent;color:#858591;border-radius:9px;padding:9px 8px;font-size:.86rem;font-weight:500;transition:background .15s,color .15s}
+  .tabs button:hover{color:#fff}
+  .tabs button.on{background:#232329;color:#fff;box-shadow:0 1px 5px #0008}
+
+  .btn{width:100%;height:46px;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:999px;font-weight:600;font-size:.92rem;border:1px solid transparent;transition:background .15s,border-color .15s,transform .1s,opacity .15s}
+  .btn:active{transform:scale(.99)}
+  .btn[disabled]{opacity:.55;cursor:default}
+  .google{background:#16161b;border-color:#34343d}
+  .google:hover:not([disabled]){background:#1d1d24;border-color:#555a9f}
+  .google svg{width:18px;height:18px}
+  .primary{background:#fff;color:#0b0b0f;margin-top:6px}
+  .primary:hover:not([disabled]){background:#e9eaff}
+  .ghost{background:transparent;border-color:#34343d;color:#d8d8e2;margin-top:10px}
+  .ghost:hover:not([disabled]){background:#16161b;border-color:#555a9f}
+
+  .or{display:flex;align-items:center;gap:12px;margin:20px 0;color:#62626e;font-size:.75rem;text-transform:uppercase;letter-spacing:.12em}
+  .or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+
+  label{display:block;margin:0 0 13px}
+  label span{display:block;margin:0 0 6px 2px;color:#b9b9c4;font-size:.8rem;font-weight:500}
+  input{width:100%;height:46px;padding:0 14px;border-radius:12px;border:1px solid #30303a;background:#08080b;outline:none;transition:border-color .15s,box-shadow .15s}
+  input::placeholder{color:#555560}
+  input:focus{border-color:var(--v);box-shadow:0 0 0 3px rgba(141,147,255,.15)}
+  input.code{text-align:center;letter-spacing:.5em;font-size:1.3rem;font-weight:600;padding-left:.5em}
+  .hint{margin:6px 2px 0;color:#6b6b78;font-size:.74rem}
+
+  .msg{min-height:20px;margin:12px 2px 0;font-size:.82rem;color:#9de8d5;text-align:center}
+  .msg.error{color:#ffaaa7}
+  .link{background:none;border:0;padding:0;color:var(--v);font-size:.82rem;text-decoration:underline;text-underline-offset:3px}
+  .link:hover{color:#fff}
+  .hidden{display:none!important}
+
+  .waiting,.verify{text-align:center;padding:6px 0}
+  .waiting p,.verify p{margin:0 0 4px}
+  .waiting .note,.verify .note{color:var(--mute);font-size:.84rem;margin-bottom:16px}
+  .verify .note b{color:#e6e6ee;font-weight:500;overflow-wrap:anywhere}
+  .spinner{width:22px;height:22px;margin:0 auto 14px;border-radius:50%;border:2px solid #2a2a31;border-top-color:var(--v);animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .envelope{width:44px;height:44px;margin:0 auto 14px;display:grid;place-items:center;border-radius:50%;background:rgba(141,147,255,.1);border:1px solid rgba(141,147,255,.3)}
+  .envelope svg{width:20px;height:20px;fill:none;stroke:#c7c9ff;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .verify .row{display:flex;justify-content:center;gap:18px;margin-top:16px}
+
+  .legal{margin-top:20px;text-align:center;color:#62626e;font-size:.72rem}
+  .legal button{background:none;border:0;padding:0;color:#8d8d9b;font-size:inherit;text-decoration:underline;text-underline-offset:2px}
+  .legal button:hover{color:#fff}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <div class="mark" aria-hidden="true">
+    <svg viewBox="0 0 32 32" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><circle cx="16" cy="16" r="3.4" fill="#fff" stroke="none"/><path d="M6 6l7.2 7.2M26 6l-7.2 7.2M6 26l7.2-7.2M26 26l-7.2-7.2" stroke="#8d93ff"/></svg>
+  </div>
+  <h1 id="title">Welcome back</h1>
+  <p class="sub" id="subtitle">Sign in to continue to Xynapse</p>
+
+  <!-- Google: waiting for the browser -->
+  <section id="waiting" class="waiting hidden" aria-live="polite">
+    <div class="spinner"></div>
+    <p>Finish signing in in your browser</p>
+    <p class="note">Choose your Google account there, then come back to this window.</p>
+    <button class="link" id="cancelGoogle" type="button">Cancel</button>
+  </section>
+
+  <!-- Sign in / Create account -->
+  <section id="forms">
+    <div class="tabs" role="tablist" aria-label="Account access">
+      <button type="button" id="tabLogin" class="on" role="tab" aria-selected="true">Sign in</button>
+      <button type="button" id="tabSignup" role="tab" aria-selected="false">Create account</button>
+    </div>
+
+    <button class="btn google" id="google" type="button">
+      <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.4 9.4 0 0 1-4.1 6.2v5.1h6.6c3.9-3.6 6.1-8.8 6.1-15Z"/><path fill="#FF3D00" d="M24 44c5.5 0 10.1-1.8 13.5-4.8l-6.6-5.1c-1.8 1.2-4.1 2-6.9 2-5.3 0-9.8-3.6-11.4-8.4H5.8v5.3A20 20 0 0 0 24 44Z"/><path fill="#4CAF50" d="M12.6 27.7a12 12 0 0 1 0-7.4V15H5.8a20 20 0 0 0 0 17.9l6.8-5.2Z"/><path fill="#1976D2" d="M24 11.9c3 0 5.6 1 7.7 3l5.8-5.8C34 5.8 29.5 4 24 4A20 20 0 0 0 5.8 15l6.8 5.3c1.6-4.8 6.1-8.4 11.4-8.4Z"/></svg>
+      Continue with Google
+    </button>
+
+    <div class="or">or</div>
+
+    <form id="form" novalidate>
+      <label class="hidden" id="usernameField"><span>Username</span><input id="username" type="text" autocomplete="username" maxlength="32" placeholder="What should we call you?"></label>
+      <label><span>Email</span><input id="email" type="email" autocomplete="email" placeholder="you@example.com" autofocus></label>
+      <label><span>Password</span><input id="password" type="password" autocomplete="current-password" maxlength="128" placeholder="Your password"><p class="hint hidden" id="pwHint">At least 10 characters.</p></label>
+      <button class="btn primary" id="submit" type="submit">Sign in</button>
+    </form>
+
+    <p class="msg" id="msg" role="status" aria-live="polite"></p>
+    <p class="msg hidden" id="resendRow"><button class="link" id="resend" type="button">Resend verification email</button></p>
+
+    <p class="legal">By continuing you agree to our <button type="button" data-open="/terms">Terms</button> and <button type="button" data-open="/privacy">Privacy Policy</button>.</p>
+  </section>
+
+  <!-- Registration: confirm the e-mail -->
+  <section id="verify" class="verify hidden" aria-live="polite">
+    <div class="envelope" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></div>
+    <p><strong>Check your inbox</strong></p>
+    <p class="note">We sent a verification code to <b id="verifyEmail"></b>.<br>Enter the 6-digit code below.</p>
+    <label><span class="hidden">Verification code</span><input id="code" class="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"></label>
+    <button class="btn primary" id="verifyBtn" type="button">Verify email</button>
+    <button class="btn ghost" id="verifiedLink" type="button">I opened the link instead — sign in</button>
+    <p class="msg" id="vmsg" role="status" aria-live="polite"></p>
+    <div class="row">
+      <button class="link" id="resend2" type="button">Resend email</button>
+      <button class="link" id="changeEmail" type="button">Use a different email</button>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const xy = window.xynapse;
+  const $ = (id) => document.getElementById(id);
+  const USER_RE = /^[\p{L}\p{N}_. -]{2,32}$/u;
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  let mode = 'login';
+  let pendingEmail = '';
+
+  const msg = (text, error) => { $('msg').textContent = text || ''; $('msg').classList.toggle('error', !!error); };
+  const vmsg = (text, error) => { $('vmsg').textContent = text || ''; $('vmsg').classList.toggle('error', !!error); };
+  const label = () => (mode === 'signup' ? 'Create account' : 'Sign in');
+
+  function showOnly(id) {
+    for (const s of ['forms', 'waiting', 'verify']) $(s).classList.toggle('hidden', s !== id);
+    const head = id === 'forms';
+    $('title').classList.toggle('hidden', !head);
+    $('subtitle').classList.toggle('hidden', !head);
+  }
+
+  function setMode(next) {
+    mode = next;
+    const signup = next === 'signup';
+    $('tabLogin').classList.toggle('on', !signup);
+    $('tabSignup').classList.toggle('on', signup);
+    $('tabLogin').setAttribute('aria-selected', String(!signup));
+    $('tabSignup').setAttribute('aria-selected', String(signup));
+    $('usernameField').classList.toggle('hidden', !signup);
+    $('pwHint').classList.toggle('hidden', !signup);
+    $('password').autocomplete = signup ? 'new-password' : 'current-password';
+    $('password').placeholder = signup ? 'Create a password' : 'Your password';
+    $('title').textContent = signup ? 'Create your account' : 'Welcome back';
+    $('subtitle').textContent = signup ? 'Start chatting with Xynapse in seconds' : 'Sign in to continue to Xynapse';
+    $('submit').textContent = label();
+    $('resendRow').classList.add('hidden');
+    msg('');
+    (signup ? $('username') : $('email')).focus();
+  }
+
+  function setBusy(busy) {
+    for (const id of ['submit', 'google', 'email', 'password', 'username', 'tabLogin', 'tabSignup']) $(id).disabled = busy;
+    $('submit').textContent = busy ? (mode === 'signup' ? 'Creating account…' : 'Signing in…') : label();
+  }
+
+  $('tabLogin').addEventListener('click', () => setMode('login'));
+  $('tabSignup').addEventListener('click', () => setMode('signup'));
+
+  $('form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    msg('');
+    $('resendRow').classList.add('hidden');
+    const email = $('email').value.trim();
+    const password = $('password').value;
+
+    if (mode === 'signup') {
+      const username = $('username').value.trim();
+      if (!USER_RE.test(username)) return msg('Username must be 2–32 characters (letters, numbers, spaces, . _ -).', true);
+      if (!EMAIL_RE.test(email) || email.length > 254) return msg('Enter a valid email address.', true);
+      if (password.length < 10 || password.length > 128) return msg('Password must be 10–128 characters.', true);
+      setBusy(true);
+      const r = await xy.signup(username, email, password);
+      setBusy(false);
+      if (!r.ok) return msg(r.error || 'Could not create the account.', true);
+      pendingEmail = email;
+      $('verifyEmail').textContent = email;
+      $('code').value = '';
+      vmsg('');
+      showOnly('verify');
+      $('code').focus();
+      return;
+    }
+
+    if (!email || !password) return msg('Enter your email and password.', true);
+    setBusy(true);
+    const r = await xy.login(email, password);
+    // On success the app switches to the chat by itself.
+    if (!r.ok) {
+      setBusy(false);
+      msg(r.error || 'Could not sign in.', true);
+      if (r.code === 'email_unverified') $('resendRow').classList.remove('hidden');
+      $('password').focus();
+    }
+  });
+
+  $('resend').addEventListener('click', async () => {
+    const email = $('email').value.trim();
+    if (!email) return msg('Enter your email first.', true);
+    const r = await xy.resendVerification(email);
+    msg(r.ok ? 'If the account needs verification, a new email is on its way.' : (r.error || 'Could not send the email.'), !r.ok);
+  });
+
+  // ---- verification step ----
+  $('code').addEventListener('input', () => { $('code').value = $('code').value.replace(/\D/g, '').slice(0, 6); });
+  $('code').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); $('verifyBtn').click(); } });
+
+  $('verifyBtn').addEventListener('click', async () => {
+    const code = $('code').value.trim();
+    if (!/^\d{6}$/.test(code)) return vmsg('Enter the 6-digit code from the email.', true);
+    $('verifyBtn').disabled = true;
+    vmsg('');
+    const r = await xy.verify(pendingEmail, code);
+    // On success the app switches to the chat by itself.
+    if (!r.ok) { $('verifyBtn').disabled = false; vmsg(r.error || 'Verification failed.', true); }
+  });
+
+  // The e-mail link opens in the browser and verifies the account there; then the app just signs in.
+  $('verifiedLink').addEventListener('click', async () => {
+    $('verifiedLink').disabled = true;
+    vmsg('');
+    const r = await xy.login(pendingEmail, $('password').value);
+    if (!r.ok) {
+      $('verifiedLink').disabled = false;
+      vmsg(r.code === 'email_unverified' ? 'Not verified yet. Enter the code or open the link in the email.' : (r.error || 'Could not sign in.'), true);
+    }
+  });
+
+  $('resend2').addEventListener('click', async () => {
+    const r = await xy.resendVerification(pendingEmail);
+    vmsg(r.ok ? 'A new email is on its way.' : (r.error || 'Could not send the email.'), !r.ok);
+  });
+
+  $('changeEmail').addEventListener('click', () => {
+    showOnly('forms');
+    $('email').value = pendingEmail;
+    setMode('signup');
+    $('email').focus();
+  });
+
+  // ---- Google ----
+  function showWaiting(on) { showOnly(on ? 'waiting' : 'forms'); }
+  $('google').addEventListener('click', async () => {
+    msg('');
+    const r = await xy.google();
+    if (r && r.ok) showWaiting(true);
+    else msg((r && r.error) || 'Could not open your browser.', true);
+  });
+  $('cancelGoogle').addEventListener('click', async () => { await xy.cancelGoogle(); showWaiting(false); });
+  xy.onGoogleResult((r) => {
+    if (r && r.ok) return; // the app switches to the chat by itself
+    showWaiting(false);
+    msg((r && r.error) || 'Google sign-in did not finish. Please try again.', true);
+  });
+
+  for (const b of document.querySelectorAll('[data-open]')) b.addEventListener('click', () => xy.openExternal(b.dataset.open));
+})();
+</script>
+</body>
+</html>

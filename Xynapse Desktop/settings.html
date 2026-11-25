@@ -1,0 +1,769 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:">
+<title>Settings – Xynapse</title>
+<style>
+  /* Colors come from the active theme (set by the script below); these are the Midnight defaults. */
+  :root{--bg:#000;--s1:#111114;--s2:#1b1b20;--line:#2a2a31;--ink:#f4f4f6;--mute:#9090a0;--v:#8d93ff;--c:#6ee7ef;color-scheme:dark}
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{background:var(--bg);color:var(--ink);font:400 14px/1.5 'Segoe UI',system-ui,-apple-system,sans-serif;overflow:hidden}
+  button,input{font:inherit;color:inherit}
+  button{cursor:pointer}
+  :focus-visible{outline:2px solid var(--c);outline-offset:2px}
+  svg{width:18px;height:18px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+
+  .shell{display:flex;height:100%}
+  nav{width:240px;flex:0 0 auto;display:flex;flex-direction:column;padding:26px 14px 16px;background:color-mix(in srgb,var(--bg) 70%,var(--s1));border-right:1px solid var(--line)}
+  .nav-title{padding:0 12px 18px;font-size:1.15rem;font-weight:600;letter-spacing:-.02em}
+  .nav-item{width:100%;display:flex;align-items:center;gap:12px;margin:2px 0;padding:10px 12px;border:0;border-radius:11px;background:transparent;color:var(--mute);text-align:left;font-size:.9rem;transition:background .15s,color .15s}
+  .nav-item:hover{background:rgba(255,255,255,.05);color:var(--ink)}
+  .nav-item[aria-current="page"]{background:color-mix(in srgb,var(--v) 16%,transparent);color:var(--ink)}
+  .nav-item .soon{margin-left:auto;padding:1px 7px;border:1px solid var(--line);border-radius:99px;color:var(--mute);font-size:.62rem;letter-spacing:.04em;text-transform:uppercase}
+  .nav-spacer{flex:1}
+  .nav-foot{padding:10px 12px 0;color:#62626e;font-size:.74rem}
+
+  .pane{flex:1;min-width:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#34343c transparent}
+  .content{max-width:740px;margin:0 auto;padding:38px 36px 70px}
+  h2{margin:0 0 4px;font-size:1.5rem;font-weight:600;letter-spacing:-.03em}
+  .lead{margin:0 0 22px;color:var(--mute)}
+  h3{margin:30px 0 4px;font-size:.78rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+
+  .x{position:fixed;top:18px;right:22px;width:38px;height:38px;display:grid;place-items:center;border:1px solid var(--line);border-radius:50%;background:var(--s1);color:var(--mute);transition:border-color .15s,color .15s}
+  .x:hover{border-color:var(--v);color:var(--ink)}
+
+  .row{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:16px 0;border-bottom:1px solid var(--line)}
+  .row:last-child{border-bottom:0}
+  .row .t{min-width:0}
+  .row .t b{display:block;font-weight:500}
+  .row .t span{display:block;margin-top:1px;color:var(--mute);font-size:.84rem}
+  .row.stack{flex-direction:column;align-items:stretch;gap:12px}
+
+  .sw{position:relative;width:42px;height:24px;flex:0 0 auto;border:1px solid #3a3a44;border-radius:99px;background:#1c1c22;transition:background .18s,border-color .18s}
+  .sw i{position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#9a9aa8;transition:transform .18s,background .18s}
+  .sw[aria-checked="true"]{background:var(--v);border-color:var(--v)}
+  .sw[aria-checked="true"] i{transform:translateX(18px);background:var(--bg)}
+  .sw[disabled]{opacity:.4;cursor:not-allowed}
+
+  .seg{display:inline-flex;padding:3px;gap:2px;border:1px solid var(--line);border-radius:11px;background:var(--bg)}
+  .seg button{border:0;border-radius:8px;padding:6px 14px;background:transparent;color:var(--mute);font-size:.85rem}
+  .seg button[aria-pressed="true"]{background:var(--s2);color:var(--ink);box-shadow:0 1px 4px #0006}
+
+  .themes{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px}
+  .theme{padding:8px;border:1px solid var(--line);border-radius:14px;background:var(--s1);text-align:left;transition:border-color .15s,transform .15s}
+  .theme:hover{transform:translateY(-1px);border-color:#4a4a58}
+  .theme[aria-pressed="true"]{border-color:var(--v);box-shadow:0 0 0 2px color-mix(in srgb,var(--v) 30%,transparent)}
+  .pv{position:relative;display:flex;height:50px;overflow:hidden;border:1px solid;border-radius:9px}
+  .pv i{width:30%}
+  .pv b{position:absolute;right:8px;bottom:8px;width:36px;height:9px;border-radius:99px}
+  .pv u{position:absolute;right:8px;top:9px;width:26px;height:5px;border-radius:99px;opacity:.7}
+  .tn{display:block;margin:8px 2px 1px;font-size:.84rem}
+
+  .swatches{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+  .swatch{position:relative;width:28px;height:28px;border:2px solid transparent;border-radius:50%;outline:1px solid var(--line);outline-offset:1px}
+  .swatch[aria-pressed="true"]{border-color:var(--bg);outline:2px solid var(--ink)}
+  .swatch.none{background:repeating-linear-gradient(135deg,#2a2a31 0 4px,#16161a 4px 8px)}
+  .picker{width:34px;height:30px;padding:0;border:1px solid var(--line);border-radius:8px;background:transparent;cursor:pointer}
+
+  .slider{display:flex;align-items:center;gap:14px}
+  input[type=range]{width:200px;accent-color:var(--v)}
+  .val{min-width:44px;text-align:right;font-variant-numeric:tabular-nums;color:var(--mute)}
+
+  .btn{padding:8px 15px;border:1px solid var(--line);border-radius:10px;background:var(--s1);color:var(--ink);font-size:.86rem;transition:border-color .15s,background .15s}
+  .btn:hover{border-color:var(--v);background:var(--s2)}
+  .btn.danger{border-color:#5a2a30;color:#ff9aa0}
+  .btn.danger:hover{border-color:#d64d58;background:rgba(214,77,88,.1)}
+  .btn[disabled]{opacity:.45;cursor:not-allowed}
+
+  .card{padding:20px;border:1px solid var(--line);border-radius:16px;background:var(--s1)}
+  .muted{color:var(--mute)}
+  .acct{display:flex;align-items:center;gap:14px}
+  .avatar{width:52px;height:52px;display:grid;place-items:center;border-radius:50%;border:1px solid color-mix(in srgb,var(--v) 40%,transparent);background:linear-gradient(145deg,color-mix(in srgb,var(--v) 55%,#000),var(--s2));font-size:1.2rem;font-weight:600}
+  .acct b{display:block;font-size:1.05rem;font-weight:600;overflow-wrap:anywhere}
+  .acct span{color:var(--mute);overflow-wrap:anywhere}
+  .meter{height:6px;margin:14px 0 6px;overflow:hidden;border-radius:99px;background:var(--s2)}
+  .meter i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--v),var(--c))}
+  .actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+
+  .kbds{border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .kbd-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:11px 16px;border-bottom:1px solid var(--line)}
+  .kbd-row:last-child{border-bottom:0}
+  .kbd-row:nth-child(odd){background:color-mix(in srgb,var(--s1) 55%,transparent)}
+  kbd{display:inline-block;min-width:24px;margin-left:4px;padding:2px 8px;border:1px solid #3a3a46;border-bottom-width:2px;border-radius:7px;background:var(--s2);font:600 .78rem 'Segoe UI',system-ui,sans-serif;text-align:center}
+
+  .soon-card{padding:26px;border:1px dashed #3a3a46;border-radius:16px;background:color-mix(in srgb,var(--s1) 60%,transparent)}
+  .soon-card .tag{display:inline-block;margin-bottom:12px;padding:3px 10px;border:1px solid color-mix(in srgb,var(--v) 40%,transparent);border-radius:99px;color:var(--v);font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+  .soon-card p{margin:0 0 10px;color:var(--mute)}
+  .soon-card ul{margin:0 0 18px;padding-left:18px;color:#b4b4c0}
+  .soon-card li{margin:3px 0}
+
+  .kv{display:grid;grid-template-columns:150px 1fr;gap:10px 16px;margin:0}
+  .kv dt{color:var(--mute)}
+  .kv dd{margin:0;overflow-wrap:anywhere}
+  .links{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+
+  /* Connectors & MCP */
+  .inp{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font-size:.88rem}
+  textarea.inp{resize:vertical;font-family:Consolas,'Cascadia Mono',monospace;font-size:.82rem}
+  select.sel{max-width:230px;padding:7px 10px;border:1px solid var(--line);border-radius:10px;background:var(--s2);color:var(--ink);font-size:.85rem}
+  .fld{margin:14px 0}
+  .fld>label{display:block;margin-bottom:6px;color:var(--mute);font-size:.82rem}
+  .conn{margin:0 0 14px}
+  .conn-head{display:flex;align-items:center;gap:14px}
+  .conn-head .t{flex:1;min-width:0}
+  .conn-head .t b{display:block;font-weight:600}
+  .conn-head .t span{font-size:.82rem}
+  .conn-sub{margin:10px 0 0;font:.8rem Consolas,'Cascadia Mono',monospace;white-space:pre-wrap;overflow-wrap:anywhere}
+  .conn-err{margin:10px 0 0;padding:9px 12px;border:1px solid #5a2a30;border-radius:10px;background:rgba(214,77,88,.08);color:#ff9aa0;font-size:.82rem;white-space:pre-wrap;overflow-wrap:anywhere}
+  .dot{width:10px;height:10px;flex:0 0 auto;border-radius:50%;background:#555}
+  .dot.ready{background:#5ed3a0;box-shadow:0 0 8px #5ed3a066}
+  .dot.starting{background:#ffb454}
+  .dot.error{background:#ff6b78}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 10px}
+  .chip{display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:5px 6px 5px 12px;border:1px solid var(--line);border-radius:99px;background:var(--s2);font-size:.82rem;overflow-wrap:anywhere}
+  .chip button{padding:0 6px;border:0;background:transparent;color:var(--mute);font-size:1rem;line-height:1}
+  .chip button:hover{color:#ff9aa0}
+  .badge{display:inline-block;margin-left:8px;padding:0 8px;border:1px solid var(--line);border-radius:99px;color:var(--mute);font-size:.64rem;font-style:normal;letter-spacing:.04em;text-transform:uppercase;vertical-align:middle}
+  .badge.ro{border-color:#2a5a46;color:#5ed3a0}
+  .badge.rw{border-color:#5a4524;color:#ffb454}
+  .tools{margin-top:14px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .tool{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .tool:last-child{border-bottom:0}
+  .tool .t{min-width:0}
+  .tool .t b{font-size:.88rem;font-weight:500}
+  .tool .t span{display:block;color:var(--mute);font-size:.78rem;overflow-wrap:anywhere}
+  .act{display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:.84rem}
+  .act:last-child{border-bottom:0}
+
+  /* Plugins & skills */
+  .xp-drop{display:flex;flex-direction:column;align-items:center;gap:8px;padding:26px 18px;border:1.5px dashed var(--line);border-radius:14px;background:color-mix(in srgb,var(--s1) 60%,transparent);text-align:center;transition:border-color .15s,background .15s}
+  .xp-drop.over{border-color:var(--v);background:color-mix(in srgb,var(--v) 10%,transparent)}
+  .xp-drop p{margin:0;color:var(--mute);font-size:.84rem}
+  .xp-msg{margin:12px 0 0;font-size:.86rem;white-space:pre-line}
+  .xp-msg.err{color:#ff9aa0}
+  .xp-msg.ok{color:#8fe0b0}
+  .xp-card{margin-top:12px;padding:16px 18px;border:1px solid var(--line);border-radius:14px;background:var(--s1)}
+  .xp-head{display:flex;align-items:center;gap:12px}
+  .xp-head .t{min-width:0;flex:1}
+  .xp-head b{font-weight:600}
+  .xp-desc{margin:6px 0 0;color:var(--mute);font-size:.86rem}
+  .xp-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .xp-tags span{padding:2px 9px;border-radius:99px;background:color-mix(in srgb,var(--v) 13%,transparent);font-size:.78rem}
+  .xp-tags span.cmd{font-family:Consolas,'Cascadia Mono',monospace}
+  .xp-note{margin:10px 0 0;font-size:.8rem;color:#e0b86a}
+
+  @media (max-width:700px){nav{width:68px}.nav-title,.nav-foot,.nav-item .lbl,.nav-item .soon{display:none}.nav-item{justify-content:center}.content{padding:30px 20px 60px}.kv{grid-template-columns:1fr}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav aria-label="Settings sections">
+    <div class="nav-title">Settings</div>
+    <div id="navItems"></div>
+    <div class="nav-spacer"></div>
+    <div class="nav-foot">Press Esc to close</div>
+  </nav>
+  <main class="pane" id="pane"><div class="content" id="content"></div></main>
+  <button class="x" id="close" type="button" aria-label="Close settings" title="Close (Esc)"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+</div>
+
+<script>
+(() => {
+  const api = window.xySettings;
+  const $ = (id) => document.getElementById(id);
+  let state = null; // { settings, themes, shortcuts, packaged, about }
+  let current = 'general';
+
+  // ---- tiny DOM helper (strings are always set as text; `html` is only used for the constant icons below) ----
+  function h(tag, props, ...kids) {
+    const e = document.createElement(tag);
+    for (const [k, v] of Object.entries(props || {})) {
+      if (v === false || v == null) continue;
+      if (k === 'class') e.className = v;
+      else if (k === 'html') e.innerHTML = v;
+      else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+      else e.setAttribute(k, v === true ? '' : v);
+    }
+    for (const kid of kids.flat()) {
+      if (kid == null || kid === false) continue;
+      e.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+    }
+    return e;
+  }
+
+  const ICONS = {
+    general: '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',
+    appearance: '<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"/>',
+    shortcuts: '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10"/>',
+    account: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',
+    connectors: '<path d="M9 3v5M15 3v5M7 8h10v3a5 5 0 0 1-10 0V8zM12 16v5"/>',
+    plugins: '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
+    data: '<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
+    about: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/>',
+  };
+  const icon = (name) => h('span', { html: '<svg viewBox="0 0 24 24" aria-hidden="true">' + ICONS[name] + '</svg>', style: 'display:flex' });
+
+  // ---- controls ----
+  async function set(patch) {
+    const r = await api.set(patch);
+    if (r && r.settings) { state.settings = r.settings; applyTheme(); }
+    return r;
+  }
+  function toggle(value, onChange, disabled) {
+    const b = h('button', { class: 'sw', type: 'button', role: 'switch', 'aria-checked': String(!!value), disabled: !!disabled }, h('i'));
+    b.addEventListener('click', async () => {
+      const next = b.getAttribute('aria-checked') !== 'true';
+      b.setAttribute('aria-checked', String(next));
+      await onChange(next);
+    });
+    return b;
+  }
+  function segmented(options, value, onChange) {
+    const wrap = h('div', { class: 'seg', role: 'group' });
+    for (const [id, text] of options) {
+      const b = h('button', { type: 'button', 'aria-pressed': String(id === value) }, text);
+      b.addEventListener('click', async () => {
+        for (const c of wrap.children) c.setAttribute('aria-pressed', 'false');
+        b.setAttribute('aria-pressed', 'true');
+        await onChange(id);
+      });
+      wrap.append(b);
+    }
+    return wrap;
+  }
+  function row(title, desc, control, extra) {
+    return h('div', { class: 'row' + (extra === 'stack' ? ' stack' : '') },
+      h('div', { class: 't' }, h('b', null, title), desc ? h('span', null, desc) : null), control);
+  }
+
+  function applyTheme() {
+    const t = state.themes.find((x) => x.id === state.settings.theme) || state.themes[0];
+    const r = document.documentElement.style;
+    const map = { '--bg': t.bg, '--s1': t.s1, '--s2': t.s2, '--line': t.line, '--ink': t.ink, '--mute': t.mute, '--v': state.settings.accent || t.v, '--c': t.c };
+    for (const [k, v] of Object.entries(map)) r.setProperty(k, v);
+  }
+
+  // ---- sections ----
+  function renderGeneral(root) {
+    const s = state.settings;
+    root.append(
+      row('Launch at login', state.packaged ? 'Start Xynapse automatically when you sign in to Windows.' : 'Available in the installed app (not in the development build).',
+        toggle(s.launchAtLogin, (v) => set({ launchAtLogin: v }), !state.packaged)),
+      row('Always on top', 'Keep the Xynapse window above your other apps.', toggle(s.alwaysOnTop, (v) => set({ alwaysOnTop: v }))),
+      row('Spell check', 'Underline misspelled words in the message box.', toggle(s.spellcheck, (v) => set({ spellcheck: v }))),
+    );
+  }
+
+  const ACCENTS = ['#8d93ff', '#4cc2ff', '#5ed3a0', '#ffb454', '#ff7aa8', '#c79bff', '#ffffff'];
+  function renderAppearance(root) {
+    const s = state.settings;
+
+    root.append(h('h3', null, 'Theme'));
+    const grid = h('div', { class: 'themes', style: 'margin-top:12px' });
+    for (const t of state.themes) {
+      const card = h('button', { class: 'theme', type: 'button', 'aria-pressed': String(t.id === s.theme) },
+        h('span', { class: 'pv', style: 'background:' + t.bg + ';border-color:' + t.line },
+          h('i', { style: 'background:' + t.s1 }), h('b', { style: 'background:' + t.v }), h('u', { style: 'background:' + t.mute })),
+        h('span', { class: 'tn' }, t.name));
+      card.addEventListener('click', async () => { await set({ theme: t.id }); render(); });
+      grid.append(card);
+    }
+    root.append(grid);
+
+    root.append(h('h3', null, 'Look & feel'));
+    const swatches = h('div', { class: 'swatches' });
+    const none = h('button', { class: 'swatch none', type: 'button', title: 'Theme default', 'aria-label': 'Use the theme accent', 'aria-pressed': String(!s.accent) });
+    none.addEventListener('click', async () => { await set({ accent: '' }); render(); });
+    swatches.append(none);
+    for (const color of ACCENTS) {
+      const b = h('button', { class: 'swatch', type: 'button', title: color, 'aria-label': 'Accent ' + color, style: 'background:' + color, 'aria-pressed': String(s.accent === color) });
+      b.addEventListener('click', async () => { await set({ accent: color }); render(); });
+      swatches.append(b);
+    }
+    const picker = h('input', { class: 'picker', type: 'color', title: 'Custom color', 'aria-label': 'Custom accent color', value: s.accent || '#8d93ff' });
+    picker.addEventListener('change', async () => { await set({ accent: picker.value }); render(); });
+    swatches.append(picker);
+    root.append(row('Accent color', 'Highlights, buttons and the glow behind the chat.', swatches, 'stack'));
+
+    const val = h('span', { class: 'val' }, Math.round(s.zoom * 100) + '%');
+    const range = h('input', { type: 'range', min: '80', max: '150', step: '5', value: String(Math.round(s.zoom * 100)), 'aria-label': 'Interface size' });
+    range.addEventListener('input', () => { val.textContent = range.value + '%'; });
+    range.addEventListener('change', () => set({ zoom: Number(range.value) / 100 }));
+    root.append(row('Interface size', 'Make everything in the chat larger or smaller. Ctrl +/- also works.', h('div', { class: 'slider' }, range, val)));
+
+    root.append(row('Chat width', 'How wide the conversation and the message box are.',
+      segmented([['narrow', 'Narrow'], ['standard', 'Standard'], ['wide', 'Wide']], s.chatWidth, (v) => set({ chatWidth: v }))));
+    root.append(row('Animated background', 'The twinkling stars and horizon glow. Turn off for a plain background.', toggle(s.animatedBackground, (v) => set({ animatedBackground: v }))));
+    root.append(row('Reduce motion', 'Switch off most animations and transitions.', toggle(s.reduceMotion, (v) => set({ reduceMotion: v }))));
+  }
+
+  function renderShortcuts(root) {
+    root.append(row('Keyboard shortcuts', 'Turn all Xynapse Desktop shortcuts on or off.', toggle(state.settings.shortcuts, (v) => set({ shortcuts: v }))));
+    root.append(h('h3', null, 'Available shortcuts'));
+    const list = h('div', { class: 'kbds', style: 'margin-top:12px' });
+    for (const sc of state.shortcuts) {
+      list.append(h('div', { class: 'kbd-row' }, h('span', null, sc.label), h('span', null, sc.display.split('+').map((k) => h('kbd', null, k)))));
+    }
+    root.append(list);
+    root.append(h('p', { class: 'muted', style: 'margin-top:14px;font-size:.84rem' }, 'Custom shortcuts are not available yet.'));
+  }
+
+  function fmt(n) { return Number(n || 0).toLocaleString('en-US'); }
+  async function renderAccount(root) {
+    const card = h('div', { class: 'card' }, h('p', { class: 'muted', style: 'margin:0' }, 'Loading your account…'));
+    root.append(card);
+    const a = await api.account();
+    card.replaceChildren();
+    if (!a || !a.user) {
+      card.append(h('p', { class: 'muted', style: 'margin:0' }, a && a.offline ? 'Can’t reach Xynapse right now. Check your connection and reopen settings.' : 'You are not signed in.'));
+      return;
+    }
+    const name = a.user.username || 'Xynapse user';
+    card.append(h('div', { class: 'acct' },
+      h('div', { class: 'avatar' }, (name || a.user.email || 'X').trim().charAt(0).toUpperCase()),
+      h('div', null, h('b', null, name), h('span', null, a.user.email || ''))));
+
+    const u = a.usage;
+    if (u) {
+      if (u.unlimited) {
+        card.append(h('p', { class: 'muted', style: 'margin:16px 0 0' }, (u.plan || 'Owner') + ' plan · unlimited usage'));
+      } else {
+        const allowance = Math.max(1, Number(u.allowance || u.tokenBudget || 0));
+        const remaining = Math.max(0, Number(u.remainingTokens || 0));
+        card.append(
+          h('p', { class: 'muted', style: 'margin:16px 0 0' }, (u.plan || 'Free') + ' plan · ' + fmt(remaining) + ' of ' + fmt(allowance) + ' tokens left'),
+          h('div', { class: 'meter' }, h('i', { style: 'width:' + Math.min(100, remaining / allowance * 100) + '%' })),
+          h('span', { class: 'muted', style: 'font-size:.8rem' }, u.resetAt ? 'Refilling in about ' + Math.max(1, Math.ceil((Number(u.resetAt) - Date.now()) / 60000)) + ' min.' : 'Tokens reset 5 hours after the pool is used.'));
+      }
+    }
+    card.append(h('div', { class: 'actions' },
+      h('button', { class: 'btn', type: 'button', onclick: () => api.openExternal('/pricing.html') }, 'View plans'),
+      h('button', { class: 'btn', type: 'button', onclick: () => api.openExternal('/support') }, 'Support'),
+      h('button', { class: 'btn danger', type: 'button', onclick: () => api.logout() }, 'Sign out')));
+  }
+
+  // Placeholder sections: the UI slot exists, the feature does not. See README ("Do zrobienia").
+  function renderSoon(planned, blurb, buttonLabel) {
+    return (root) => {
+      root.append(h('div', { class: 'soon-card' },
+        h('span', { class: 'tag' }, 'Coming soon'),
+        h('p', null, blurb),
+        h('ul', null, planned.map((p) => h('li', null, p))),
+        h('button', { class: 'btn', type: 'button', disabled: true }, buttonLabel)));
+    };
+  }
+
+  // ---- Plugins & skills (stored on your account, so the website shows the same list) ----
+  function toBase64(buf) {
+    const bytes = new Uint8Array(buf);
+    let bin = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(bin);
+  }
+  function renderPlugins(root) {
+    const msg = h('p', { class: 'xp-msg', hidden: true });
+    const list = h('div');
+    const input = h('input', { type: 'file', accept: '.zip,.skill,.plugin,.md,.markdown,.json,.txt', multiple: true, hidden: true });
+    const say = (text, kind) => { msg.hidden = !text; msg.className = 'xp-msg ' + (kind || ''); msg.textContent = text || ''; };
+    const errorOf = (r) => (r && r.data && r.data.error && r.data.error.message) || 'Upload failed.';
+
+    async function upload(files) {
+      const ok = [], bad = [];
+      for (const f of files) {
+        if (f.size > 4 * 1024 * 1024) { bad.push(f.name + ': larger than 4 MB.'); continue; }
+        say('Uploading ' + f.name + '…', '');
+        try {
+          const isZip = /\.(zip|skill|plugin)$/i.test(f.name);
+          const data = isZip ? toBase64(await f.arrayBuffer()) : await f.text();
+          const r = await api.plugins.upload({ filename: f.name, encoding: isZip ? 'base64' : 'text', data });
+          if (r && r.ok && r.data && r.data.item) ok.push((r.data.replaced ? 'Updated ' : 'Added ') + r.data.item.name + '.');
+          else bad.push(f.name + ': ' + errorOf(r));
+        } catch {
+          bad.push(f.name + ': could not read the file.');
+        }
+      }
+      say(bad.length ? bad.concat(ok).join('\n') : ok.join('\n'), bad.length ? 'err' : 'ok');
+      await load();
+    }
+
+    const drop = h('div', { class: 'xp-drop' },
+      h('b', null, 'Upload a plugin or skill'),
+      h('p', null, 'Drop a .zip or .skill plugin, a SKILL.md file, or a .json manifest here.'),
+      h('button', { class: 'btn', type: 'button', onclick: () => input.click() }, 'Choose files'));
+    for (const n of ['dragenter', 'dragover']) drop.addEventListener(n, (e) => { e.preventDefault(); drop.classList.add('over'); });
+    for (const n of ['dragleave', 'drop']) {
+      drop.addEventListener(n, (e) => {
+        e.preventDefault();
+        drop.classList.remove('over');
+        if (n === 'drop') upload([...((e.dataTransfer && e.dataTransfer.files) || [])]);
+      });
+    }
+    input.addEventListener('change', () => { upload([...input.files]); input.value = ''; });
+
+    function card(it) {
+      const sw = toggle(it.enabled, async (v) => {
+        const r = await api.plugins.toggle(it.id, v);
+        if (!r || !r.ok) { say('Could not update ' + it.name + '.', 'err'); load(); }
+      });
+      const rm = h('button', { class: 'btn danger', type: 'button' }, 'Remove');
+      let armed = false, timer = 0;
+      rm.addEventListener('click', async () => {
+        if (!armed) {
+          armed = true; rm.textContent = 'Click again to confirm';
+          timer = setTimeout(() => { armed = false; rm.textContent = 'Remove'; }, 3000);
+          return;
+        }
+        clearTimeout(timer);
+        await api.plugins.remove(it.id);
+        load();
+      });
+      const tags = it.skills.map((s) => h('span', { title: s.description || '' }, s.name))
+        .concat(it.commands.map((c) => h('span', { class: 'cmd', title: c.description || '' }, '/' + c.name)));
+      return h('div', { class: 'xp-card' },
+        h('div', { class: 'xp-head' },
+          h('div', { class: 't' }, h('b', null, it.name), h('em', { class: 'badge' }, it.kind === 'plugin' ? 'Plugin' : 'Skill'), it.version ? h('em', { class: 'badge' }, 'v' + it.version) : null),
+          sw),
+        it.description ? h('p', { class: 'xp-desc' }, it.description) : null,
+        tags.length ? h('div', { class: 'xp-tags' }, tags) : null,
+        it.ignored && it.ignored.length ? h('p', { class: 'xp-note' }, 'Skipped because they need a local connection: ' + it.ignored.join(', ') + '.') : null,
+        h('div', { class: 'actions', style: 'margin-top:12px' }, rm));
+    }
+
+    async function load() {
+      const r = await api.plugins.list();
+      if (!r || !r.ok) {
+        list.replaceChildren(h('p', { class: 'muted', style: 'margin-top:16px' }, (r && r.data && r.data.error && r.data.error.message) || 'Could not load your plugins. Try again in a moment.'));
+        return;
+      }
+      const items = (r.data && r.data.items) || [];
+      if (!items.length) list.replaceChildren(h('p', { class: 'muted', style: 'margin-top:16px' }, 'Nothing installed yet. Upload a file above to get started.'));
+      else list.replaceChildren(...items.map(card));
+    }
+
+    root.append(drop, input, msg,
+      h('p', { class: 'muted', style: 'margin:14px 0 0;font-size:.84rem' }, 'A skill is a SKILL.md file with a name and description, followed by instructions. Xynapse uses a skill when your request matches its description. Plugins can bundle several skills and slash commands: type /command-name in the chat to run one. Plugins are stored on your account, so they also work on the website.'),
+      h('h3', null, 'Installed'), list);
+    load();
+  }
+
+  // ---- Connectors & MCP ----
+  const POLICY_OPTIONS = [['ask', 'Ask every time'], ['readonly', 'Auto-allow read-only'], ['always', 'Always allow'], ['never', 'Block']];
+  const POLICY_HINTS = {
+    ask: 'Every tool call needs your approval first.',
+    readonly: 'Tools that only read run automatically. Anything that changes data asks first.',
+    always: 'Everything runs without asking. Only use this for tools you fully trust.',
+    never: 'All tool calls are refused.',
+  };
+  const TOOL_POLICY_OPTIONS = [['default', 'Use connection setting'], ['ask', 'Ask every time'], ['always', 'Always allow'], ['never', 'Block']];
+  const STATUS_TEXT = { ready: 'Connected', starting: 'Connecting…', error: 'Problem', off: 'Turned off', stopped: 'Stopped' };
+  const DECISION_TEXT = { auto: 'Ran automatically', once: 'Allowed once', always: 'Always allowed', denied: 'You denied it', blocked: 'Blocked' };
+  let liveRedraw = null;
+  const openTools = new Set();
+
+  function selectBox(options, value, onChange, label) {
+    const sel = h('select', { class: 'sel', 'aria-label': label });
+    for (const [v, t] of options) {
+      const o = h('option', { value: v }, t);
+      if (v === value) o.selected = true;
+      sel.append(o);
+    }
+    sel.addEventListener('change', () => onChange(sel.value));
+    return sel;
+  }
+  function fld(label, control) { return h('div', { class: 'fld' }, h('label', null, label), control); }
+
+  function serverCard(s, onEdit) {
+    const kind = s.type === 'folder' ? 'Local folder' : 'Custom command';
+    const detail = s.type === 'folder' ? s.paths.join('\n') : [s.command].concat(s.args).join(' ');
+    const status = STATUS_TEXT[s.status] || s.status;
+    const count = s.status === 'ready' ? ' · ' + s.tools.length + (s.tools.length === 1 ? ' tool' : ' tools') : '';
+
+    const actions = h('div', { class: 'actions', style: 'margin-top:4px' });
+    if (s.tools.length) {
+      const open = openTools.has(s.id);
+      const tb = h('button', { class: 'btn', type: 'button' }, open ? 'Hide tools' : 'Tools (' + s.tools.length + ')');
+      tb.addEventListener('click', () => {
+        if (openTools.has(s.id)) openTools.delete(s.id); else openTools.add(s.id);
+        if (liveRedraw) liveRedraw();
+      });
+      actions.append(tb);
+    }
+    actions.append(h('button', { class: 'btn', type: 'button', onclick: () => onEdit(s) }, 'Edit'));
+    if (s.enabled) actions.append(h('button', { class: 'btn', type: 'button', onclick: () => api.mcp.restart(s.id) }, 'Restart'));
+    const rm = h('button', { class: 'btn danger', type: 'button' }, 'Remove');
+    let armed = false, timer = 0;
+    rm.addEventListener('click', () => {
+      if (!armed) {
+        armed = true; rm.textContent = 'Click again to confirm';
+        timer = setTimeout(() => { armed = false; rm.textContent = 'Remove'; }, 3000);
+        return;
+      }
+      clearTimeout(timer);
+      api.mcp.remove(s.id);
+    });
+    actions.append(rm);
+
+    const card = h('div', { class: 'card conn' },
+      h('div', { class: 'conn-head' },
+        h('span', { class: 'dot ' + s.status, title: status }),
+        h('div', { class: 't' }, h('b', null, s.name), h('span', { class: 'muted' }, kind + ' · ' + status + count)),
+        toggle(s.enabled, (v) => api.mcp.setEnabled(s.id, v))),
+      h('div', { class: 'conn-sub muted' }, detail),
+      s.status === 'error' ? h('div', { class: 'conn-err' }, s.error) : null,
+      row('Permissions', POLICY_HINTS[s.policy], selectBox(POLICY_OPTIONS, s.policy, (v) => api.mcp.setPolicy(s.id, v), 'Permissions for ' + s.name)),
+      actions);
+
+    if (s.tools.length && openTools.has(s.id)) {
+      const list = h('div', { class: 'tools' });
+      for (const t of s.tools) {
+        list.append(h('div', { class: 'tool' },
+          h('div', { class: 't' },
+            h('b', null, t.name),
+            t.readOnly ? h('em', { class: 'badge ro' }, 'read-only') : (t.destructive ? h('em', { class: 'badge rw' }, 'changes data') : null),
+            t.description ? h('span', null, t.description) : null),
+          selectBox(TOOL_POLICY_OPTIONS, s.toolPolicies[t.name] || 'default', (v) => api.mcp.setToolPolicy(s.id, t.name, v), 'Permission for ' + t.name)));
+      }
+      card.append(list);
+    }
+    return card;
+  }
+
+  function openForm(box, existing) {
+    const editing = !!existing;
+    let type = existing ? existing.type : 'folder';
+    let touched = false;
+    const paths = existing && existing.paths ? existing.paths.slice() : [];
+    const defaultPolicy = (t) => (t === 'folder' ? 'readonly' : 'ask');
+
+    const name = h('input', { class: 'inp', type: 'text', maxlength: '60', placeholder: 'e.g. My documents' });
+    name.value = existing ? existing.name : '';
+    const policy = selectBox(POLICY_OPTIONS, existing ? existing.policy : defaultPolicy(type), () => { touched = true; }, 'Default permission');
+    const err = h('div', { class: 'conn-err', style: 'display:none' });
+    const showErr = (msg) => { err.textContent = msg; err.style.display = 'block'; };
+    const body = h('div');
+
+    // folder connection
+    const chips = h('div', { class: 'chips' });
+    function paintChips() {
+      chips.replaceChildren(...paths.map((p, i) => h('span', { class: 'chip' }, p,
+        h('button', { type: 'button', 'aria-label': 'Remove ' + p, onclick: () => { paths.splice(i, 1); paintChips(); } }, '×'))));
+      if (!paths.length) chips.append(h('span', { class: 'muted', style: 'font-size:.84rem' }, 'No folders added yet.'));
+    }
+    const manual = h('input', { class: 'inp', type: 'text', placeholder: 'or paste a full folder path' });
+    const addManual = () => {
+      const v = manual.value.trim();
+      if (v && !paths.includes(v)) paths.push(v);
+      manual.value = '';
+      paintChips();
+    };
+    manual.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addManual(); } });
+    const browse = h('button', { class: 'btn', type: 'button' }, 'Browse…');
+    browse.addEventListener('click', async () => {
+      const r = await api.mcp.pickFolders();
+      for (const p of (r && r.paths) || []) if (!paths.includes(p)) paths.push(p);
+      paintChips();
+    });
+
+    // custom command connection
+    const cmd = h('input', { class: 'inp', type: 'text', placeholder: 'e.g. npx or node' });
+    cmd.value = existing && existing.command ? existing.command : '';
+    const args = h('textarea', { class: 'inp', rows: '3', placeholder: 'One argument per line' });
+    args.value = existing && existing.args ? existing.args.join('\n') : '';
+    const env = h('textarea', { class: 'inp', rows: '3', placeholder: 'KEY=value, one per line (optional)' });
+    env.value = existing && existing.env ? Object.entries(existing.env).map(([k, v]) => k + '=' + v).join('\n') : '';
+
+    function paintBody() {
+      if (type === 'folder') {
+        paintChips();
+        body.replaceChildren(
+          fld('Folders Xynapse can access', h('div', null, chips,
+            h('div', { class: 'actions', style: 'margin:0 0 10px' }, browse),
+            h('div', { style: 'display:flex;gap:8px' }, manual, h('button', { class: 'btn', type: 'button', onclick: addManual }, 'Add')))),
+          h('p', { class: 'muted', style: 'font-size:.82rem;margin:0' }, 'Uses the official filesystem MCP server, which needs Node.js (npx) installed. It can only reach the folders listed here.'));
+      } else {
+        body.replaceChildren(
+          fld('Command', cmd), fld('Arguments', args), fld('Environment variables', env),
+          h('p', { class: 'muted', style: 'font-size:.82rem;margin:0' }, 'This starts a program on your computer. Only add servers you trust.'));
+      }
+      if (!touched && !editing) policy.value = defaultPolicy(type);
+    }
+
+    const typeField = editing ? null : fld('Type', segmented([['folder', 'Local folder'], ['custom', 'Custom command']], type, (v) => { type = v; paintBody(); }));
+
+    const save = h('button', { class: 'btn', type: 'button' }, editing ? 'Save changes' : 'Add & connect');
+    save.addEventListener('click', async () => {
+      err.style.display = 'none';
+      const payload = { id: existing ? existing.id : undefined, type, name: name.value, policy: policy.value };
+      if (type === 'folder') {
+        if (manual.value.trim()) addManual();
+        payload.paths = paths.slice();
+      } else {
+        payload.command = cmd.value;
+        payload.args = args.value.split(/\r?\n/).map((x) => x.trim()).filter(Boolean);
+        const envObj = {};
+        for (const line of env.value.split(/\r?\n/)) {
+          const l = line.trim();
+          if (!l) continue;
+          const i = l.indexOf('=');
+          if (i <= 0) { showErr('Environment variables must look like KEY=value.'); return; }
+          envObj[l.slice(0, i).trim()] = l.slice(i + 1);
+        }
+        payload.env = envObj;
+      }
+      save.disabled = true;
+      const r = await api.mcp.save(payload);
+      save.disabled = false;
+      if (r && r.ok) box.replaceChildren(); else showErr((r && r.error) || 'Could not save this connection.');
+    });
+    const cancel = h('button', { class: 'btn', type: 'button', onclick: () => box.replaceChildren() }, 'Cancel');
+
+    const form = h('div', { class: 'card', style: 'margin:0 0 18px' },
+      h('b', null, editing ? 'Edit connection' : 'New connection'),
+      typeField,
+      fld('Name', name),
+      body,
+      fld('Default permission', h('div', null, policy, h('p', { class: 'muted', style: 'font-size:.8rem;margin:6px 0 0' }, 'What Xynapse may do without asking. You can override this for each tool later.'))),
+      err,
+      h('div', { class: 'actions' }, save, cancel));
+    box.replaceChildren(form);
+    paintBody();
+    form.scrollIntoView({ block: 'nearest' });
+    name.focus();
+  }
+
+  function renderConnectors(root) {
+    const formBox = h('div');
+    const listBox = h('div');
+    const reset = h('button', { class: 'btn', type: 'button' }, 'Reset “always allow” approvals');
+    reset.addEventListener('click', async () => {
+      await api.mcp.resetApprovals();
+      reset.textContent = 'Approvals reset';
+      setTimeout(() => { reset.textContent = 'Reset “always allow” approvals'; }, 1800);
+    });
+    root.append(
+      h('div', { class: 'actions', style: 'margin:0 0 18px' },
+        h('button', { class: 'btn', type: 'button', onclick: () => openForm(formBox, null) }, 'Add connection'), reset),
+      formBox, listBox);
+
+    async function draw() {
+      const st = await api.mcp.state();
+      if (!st) return;
+      const kids = [];
+      if (!st.servers.length) {
+        kids.push(h('div', { class: 'soon-card' },
+          h('p', null, 'No connections yet. Add a local folder so Xynapse can work with your files, or connect any MCP server with a custom command.'),
+          h('p', { style: 'margin:0' }, 'Nothing is shared until you add it, and Xynapse asks before anything that changes your data.')));
+      }
+      for (const s of st.servers) kids.push(serverCard(s, (srv) => openForm(formBox, srv)));
+      if (st.activity.length) {
+        kids.push(h('h3', null, 'Recent activity'));
+        const list = h('div', { style: 'margin-top:8px' });
+        for (const a of st.activity) {
+          list.append(h('div', { class: 'act' },
+            h('span', { class: 'muted', style: 'min-width:58px' }, new Date(a.t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })),
+            h('span', null, a.tool + ' · ' + a.server),
+            h('span', { class: 'muted', style: 'margin-left:auto' }, (DECISION_TEXT[a.decision] || a.decision) + (a.ok === false ? ' · failed' : ''))));
+        }
+        kids.push(list);
+      }
+      listBox.replaceChildren(...kids);
+    }
+    liveRedraw = draw;
+    draw();
+  }
+
+  function renderData(root) {
+    let armed = false, timer = 0;
+    const reset = h('button', { class: 'btn danger', type: 'button' }, 'Reset settings');
+    reset.addEventListener('click', async () => {
+      if (!armed) {
+        armed = true; reset.textContent = 'Click again to confirm';
+        timer = setTimeout(() => { armed = false; reset.textContent = 'Reset settings'; }, 3000);
+        return;
+      }
+      clearTimeout(timer); armed = false;
+      const r = await api.reset();
+      if (r && r.settings) { state.settings = r.settings; applyTheme(); }
+      render();
+    });
+    const clear = h('button', { class: 'btn', type: 'button' }, 'Clear cache');
+    clear.addEventListener('click', async () => {
+      clear.disabled = true;
+      const r = await api.clearCache();
+      clear.textContent = r && r.ok ? 'Cache cleared' : 'Could not clear';
+      setTimeout(() => { clear.textContent = 'Clear cache'; clear.disabled = false; }, 1800);
+    });
+    root.append(
+      row('Clear cache', 'Removes temporary files. Your chats are stored on your account, and you stay signed in.', clear),
+      row('App data folder', 'Where Xynapse Desktop keeps its window position and these settings.', h('button', { class: 'btn', type: 'button', onclick: () => api.openDataFolder() }, 'Open folder')),
+      row('Reset settings', 'Restore the theme, zoom and all options on this page to their defaults.', reset),
+    );
+  }
+
+  function renderAbout(root) {
+    const a = state.about;
+    root.append(h('div', { class: 'card' }, h('dl', { class: 'kv' },
+      h('dt', null, 'Version'), h('dd', null, a.version),
+      h('dt', null, 'Electron'), h('dd', null, a.electron),
+      h('dt', null, 'Chromium'), h('dd', null, a.chromium),
+      h('dt', null, 'Platform'), h('dd', null, a.platform),
+      h('dt', null, 'Server'), h('dd', null, a.server))));
+    root.append(h('div', { class: 'links' },
+      h('button', { class: 'btn', type: 'button', onclick: () => api.openExternal('/terms') }, 'Terms'),
+      h('button', { class: 'btn', type: 'button', onclick: () => api.openExternal('/privacy') }, 'Privacy Policy'),
+      h('button', { class: 'btn', type: 'button', onclick: () => api.openExternal('/support') }, 'Support')));
+  }
+
+  // To add a settings page: add an entry here (and an icon above). `soon: true` only labels it in the sidebar.
+  const SECTIONS = [
+    { id: 'general', label: 'General', lead: 'Basic behavior of the desktop app.', render: renderGeneral },
+    { id: 'appearance', label: 'Appearance', lead: 'Themes and how Xynapse looks.', render: renderAppearance },
+    { id: 'shortcuts', label: 'Shortcuts', lead: 'Keyboard shortcuts for the chat.', render: renderShortcuts },
+    { id: 'account', label: 'Account', lead: 'Your profile and usage.', render: renderAccount },
+    { id: 'connectors', label: 'Connectors & MCP', lead: 'Give Xynapse access to your folders and tools, and decide what it may do.',
+      render: renderConnectors },
+    { id: 'plugins', label: 'Plugins', lead: 'Upload skills and plugins that teach Xynapse how you like specific kinds of work done.', render: renderPlugins },
+    { id: 'data', label: 'Data', lead: 'Cache and local app data.', render: renderData },
+    { id: 'about', label: 'About', lead: 'Version and legal.', render: renderAbout },
+  ];
+
+  function render() {
+    const sec = SECTIONS.find((s) => s.id === current) || SECTIONS[0];
+    const root = $('content');
+    root.replaceChildren(h('h2', null, sec.label), h('p', { class: 'lead' }, sec.lead));
+    sec.render(root);
+    for (const b of $('navItems').children) {
+      if (b.dataset.id === sec.id) b.setAttribute('aria-current', 'page');
+      else b.removeAttribute('aria-current');
+    }
+    $('pane').scrollTop = 0;
+  }
+  function go(id) { current = id; render(); }
+
+  async function init() {
+    state = await api.get();
+    if (!state) return;
+    applyTheme();
+    const nav = $('navItems');
+    for (const s of SECTIONS) {
+      const b = h('button', { class: 'nav-item', type: 'button', 'data-id': s.id }, icon(s.id), h('span', { class: 'lbl' }, s.label), s.soon ? h('em', { class: 'soon', style: 'font-style:normal' }, 'Soon') : null);
+      b.addEventListener('click', () => go(s.id));
+      nav.append(b);
+    }
+    api.mcp.onChanged(() => { if (current === 'connectors' && liveRedraw) liveRedraw(); });
+    const wanted = new URLSearchParams(location.search).get('s');
+    if (SECTIONS.some((s) => s.id === wanted)) current = wanted;
+    render();
+  }
+
+  $('close').addEventListener('click', () => api.close());
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') api.close(); });
+  init();
+})();
+</script>
+</body>
+</html>

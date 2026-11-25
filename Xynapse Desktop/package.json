@@ -1,0 +1,67 @@
+{
+  "name": "xynapse-desktop",
+  "productName": "Xynapse",
+  "version": "1.0.1",
+  "description": "Xynapse desktop app (Electron thin client for xynapse.eu)",
+  "main": "main.js",
+  "private": true,
+  "author": "Xynapse",
+  "scripts": {
+    "sync-icon": "node scripts/sync-icon.js",
+    "prestart": "node scripts/sync-icon.js",
+    "prestart:local": "node scripts/sync-icon.js",
+    "prebuild": "node scripts/sync-icon.js && node scripts/code-update.js prepare",
+    "prebuild:dir": "node scripts/sync-icon.js && node scripts/code-update.js prepare",
+    "start": "electron .",
+    "start:local": "electron . --url=http://localhost:20280/chat",
+    "build": "electron-builder --win",
+    "build:dir": "electron-builder --win --dir",
+    "release": "npm run build && node scripts/publish-download.js && node scripts/code-update.js publish",
+    "publish-code": "node scripts/code-update.js publish"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "eu.xynapse.desktop",
+    "productName": "Xynapse",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "mcp.js",
+      "themes.js",
+      "settings.html",
+      "settings-preload.js",
+      "preload.js",
+      "login.html",
+      "offline.html",
+      "overlay.html",
+      "overlay-preload.js",
+      "build/icon.png",
+      "package.json"
+    ],
+    "extraResources": [
+      { "from": "../Xynapse Code", "to": "xynapse-code", "filter": ["**/*", "!node_modules/**"] }
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "artifactName": "Xynapse-Setup.${ext}",
+      "shortcutName": "Xynapse",
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "runAfterFinish": true,
+      "include": "build/installer.nsh"
+    }
+  },
+  "allowScripts": {
+    "electron@33.4.11": true
+  }
+}

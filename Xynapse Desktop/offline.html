@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Xynapse – brak połączenia</title>
+<style>
+  :root{color-scheme:dark}
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{display:grid;place-items:center;background:#000;color:#f4f4f6;font:400 16px/1.6 'Segoe UI',system-ui,sans-serif;
+       background-image:radial-gradient(ellipse at 20% 40%,rgba(82,91,255,.14),transparent 40%),radial-gradient(ellipse at 80% 20%,rgba(80,216,235,.09),transparent 35%)}
+  .box{max-width:420px;padding:36px;text-align:center;border:1px solid #2a2a31;border-radius:22px;background:rgba(17,17,20,.8)}
+  h1{font-size:1.5rem;margin:0 0 8px;font-weight:600;letter-spacing:-.02em}
+  p{color:#9090a0;margin:0 0 22px;font-size:.95rem}
+  button{border:1px solid #fff;background:#fff;color:#111;border-radius:999px;padding:11px 26px;font:600 .95rem 'Segoe UI',system-ui,sans-serif;cursor:pointer}
+  button:hover{background:#e9eaff}
+  small{display:block;margin-top:16px;color:#62626e;font-size:.75rem;word-break:break-all}
+</style>
+</head>
+<body>
+  <div class="box">
+    <h1>Brak połączenia z Xynapse</h1>
+    <p>Nie udało się wczytać aplikacji. Sprawdź połączenie z internetem i spróbuj ponownie.</p>
+    <button id="retry">Spróbuj ponownie</button>
+    <small id="target"></small>
+  </div>
+<script>
+  const target = new URLSearchParams(location.search).get('url') || 'https://xynapse.eu/chat';
+  document.getElementById('target').textContent = target;
+  document.getElementById('retry').onclick = () => { location.href = target; };
+  // auto-retry when the connection comes back
+  addEventListener('online', () => { location.href = target; });
+</script>
+</body>
+</html>
