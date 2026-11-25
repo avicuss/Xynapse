@@ -1,0 +1,17 @@
+{
+  "name": "xynapse-code",
+  "version": "0.2.0",
+  "description": "Xynapse Code - a good-looking terminal CLI",
+  "bin": {
+    "xynapse": "bin/xynapse.js"
+  },
+  "scripts": {
+    "start": "node bin/xynapse.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "private": true,
+  "author": "Xynapse",
+  "license": "UNLICENSED"
+}
